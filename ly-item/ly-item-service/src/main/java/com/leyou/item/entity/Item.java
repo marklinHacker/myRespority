@@ -1,7 +1,6 @@
-package com.leyou.item.pojo;
+package com.leyou.item.entity;
 
 
-import com.leyou.item.dto.BrandDTO;
 import lombok.Data;
 
 /**

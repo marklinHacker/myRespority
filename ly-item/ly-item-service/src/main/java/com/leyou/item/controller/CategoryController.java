@@ -1,5 +1,7 @@
 package com.leyou.item.controller;
 
+import com.leyou.item.dto.SpecGroupDTO;
+import com.leyou.item.entity.Category;
 import com.leyou.item.service.CategoryService;
 import com.leyou.item.dto.CategoryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,4 +30,14 @@ public class CategoryController {
             @RequestParam(value = "pid", defaultValue = "0") Long pid) {
         return ResponseEntity.ok(this.categoryService.queryListByParent(pid));
     }
+
+    /**根据品牌id查询所有品牌信息
+     * @param brandId
+     * @return
+     */
+    @GetMapping("/of/brand")
+    public ResponseEntity<List<CategoryDTO>> queryByBrandId(@RequestParam("id")Long brandId) {
+        return ResponseEntity.ok(this.categoryService.queryListByBrandId(brandId));
+    }
+
 }

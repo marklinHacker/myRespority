@@ -12,6 +12,6 @@ import lombok.Data;
 public class BrandDTO {
     private Long id;
     private String name;
-    private String letter;
+    private Character letter;
     private String image;
 }

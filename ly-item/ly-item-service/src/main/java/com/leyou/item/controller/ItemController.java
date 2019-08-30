@@ -1,9 +1,9 @@
 package com.leyou.item.controller;
 
+import com.leyou.item.entity.Item;
 import com.leyou.item.service.ItemService;
 import com.leyou.common.enums.ExceptionEnum;
 import com.leyou.common.exception.LyException;
-import com.leyou.item.pojo.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

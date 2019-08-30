@@ -1,5 +1,4 @@
 package com.leyou.item.service.Impl;
-
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.leyou.common.enums.ExceptionEnum;
@@ -13,9 +12,11 @@ import com.leyou.item.service.BrandService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,12 +30,14 @@ public class BrandServiceImpl implements BrandService {
     @Autowired
     BrandMapper brandMapper;
 
-    /**查询品牌结果分页
-     * @param page 当前页 int类型
-     * @param rows 每页大小 int类型
-     * @param key 搜索关键字 String类型
+    /**
+     * 查询品牌结果分页
+     *
+     * @param page   当前页 int类型
+     * @param rows   每页大小 int类型
+     * @param key    搜索关键字 String类型
      * @param sortBy 排序字段 String类型
-     * @param desc 是否为降序 Boolean类型
+     * @param desc   是否为降序 Boolean类型
      * @return 1.total 总条数
      * 2.items 当前页数据
      * 3.totalPage 有些还需要总页数
@@ -63,7 +66,12 @@ public class BrandServiceImpl implements BrandService {
         //根据查询条件拼接查询到品牌的所有属性数据
         List<Brand> brands = brandMapper.selectByExample(example);
         /**
-         * brands = Page{count=true, pageNum=1, pageSize=5, startRow=0, endRow=5, total=165, pages=33, reasonable=false, pageSizeZero=false}[Brand(id=1115, name=HTC, image=, letter=H, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019), Brand(id=1528, name=LG, image=, letter=L, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019), Brand(id=1912, name=NEC, image=, letter=N, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019), Brand(id=2032, name=OPPO, image=http://img10.360buyimg.com/popshop/jfs/t2119/133/2264148064/4303/b8ab3755/56b2f385N8e4eb051.jpg, letter=O, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019), Brand(id=2505, name=TCL, image=, letter=T, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019)]
+         * brands = Page{count=true, pageNum=1, pageSize=5, startRow=0, endRow=5, total=165, pages=33, reasonable=false, pageSizeZero=false}
+         * [Brand(id=1115, name=HTC, image=, letter=H, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019),
+         * Brand(id=1528, name=LG, image=, letter=L, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019),
+         * Brand(id=1912, name=NEC, image=, letter=N, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019),
+         * Brand(id=2032, name=OPPO, image=http://img10.360buyimg.com/popshop/jfs/t2119/133/2264148064/4303/b8ab3755/56b2f385N8e4eb051.jpg, letter=O, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019),
+         * Brand(id=2505, name=TCL, image=, letter=T, createTime=Wed Feb 27 22:54:12 CST 2019, updateTime=Wed Feb 27 22:54:29 CST 2019)]
          */
         System.out.println("brands = " + brands);
         //判断是否为空
@@ -99,23 +107,91 @@ public class BrandServiceImpl implements BrandService {
         return new PageResult<BrandDTO>(info.getTotal(), list);
     }
 
+   /* public PageResult<BrandDTO> queryBrandByPages(Integer page, Integer rows) {
+//先得到分页的结果
+        Page<Object> pages = PageHelper.startPage(page, rows);
+        //查询品牌的总数
+
+        //得到品牌总数
+        List<Brand> brands = brandMapper.select(null);
+        //将分类结果的brand集合转化为brandDTO的集合
+        List<BrandDTO> list = BeanHelper.copyWithCollection(brands, BrandDTO.class);
+        //根据总数得到分页的页数
+        PageResult<BrandDTO> dtoPageResult = new PageResult<>();
+
+        PageInfo<BrandDTO> pageInfo = new PageInfo<BrandDTO>();
+        long total = pageInfo.getTotal();
+        return new PageResult<>(total, list);
+    }*/
+@Transactional
     @Override
     public void saveBrand(BrandDTO brandDTO, List<Long> ids) {
         //新增品牌
         //将brandDTO转化为Brand
-       Brand brand= BeanHelper.copyProperties(brandDTO, Brand.class);
+        Brand brand = BeanHelper.copyProperties(brandDTO, Brand.class);
         brand.setId(null);
         //新增品牌
         //这里调用了brandMapper中的一个自定义方法，来实现中间表的数据新增
+        //新增品牌，主键回显
         int count = brandMapper.insertSelective(brand);
         //如果count不为1，说明新增没有成功
         if (count != 1) {
             //抛出异常
             throw new LyException(ExceptionEnum.INSERT_OPEATION_FAIL);
         }
-      count = brandMapper.insertCategoryBrand(brand.getId(),ids);
+        //批量添加品牌分类
+    //保存品牌和分类的中间表
+        count = brandMapper.insertCategoryBrand(brand.getId(), ids);
         if (count != ids.size()) {
             throw new LyException(ExceptionEnum.INSERT_OPEATION_FAIL);
         }
+    }
+
+    /**修改品牌
+     * @param brandDTO 用brandDTO接收参数
+     * @param ids 分类的id的集合
+     */
+    @Override
+    public void updateBrand(BrandDTO brandDTO, List<Long> ids) {
+            //将前端传递的参数转化为数据库需要的类型
+        Brand brand = BeanHelper.copyProperties(brandDTO, Brand.class);
+        int count = brandMapper.updateByPrimaryKeySelective(brand);
+        if (count != 1) {
+            throw new LyException(ExceptionEnum.BRAND_INSERT_ERROR);
+        }
+
+        brandMapper.deleteCategoryBrand(brand.getId());
+         count  = brandMapper.insertCategoryBrand(brand.getId(), ids);
+
+        if (count != ids.size()) {
+            throw new LyException(ExceptionEnum.INSERT_OPEATION_FAIL);
+        }
+    }
+
+    @Override
+    public BrandDTO queryById(Long brandId) {
+        Brand brand = this.brandMapper.selectByPrimaryKey(brandId);
+        BrandDTO brandDTO = BeanHelper.copyProperties(brand, BrandDTO.class);
+        return brandDTO;
+    }
+
+    @Override
+    public Brand queryBrandName(Long brandId) {
+       Brand brand= brandMapper.selectByPrimaryKey(brandId);
+        return brand;
+    }
+
+    /**根据分类id查询品牌
+     * @param id
+     * @return
+     */
+    @Override
+    public List<BrandDTO> queryBrandByCategoryId(Long id) {
+//查询品牌和分类的中间表
+        List<Brand> brandList = brandMapper.selectBrandByCategoryId(id);
+        if (CollectionUtils.isEmpty(brandList)) {
+            throw new LyException(ExceptionEnum.BRAND_NOT_FOUND);
+        }
+        return BeanHelper.copyWithCollection(brandList,BrandDTO.class);
     }
 }

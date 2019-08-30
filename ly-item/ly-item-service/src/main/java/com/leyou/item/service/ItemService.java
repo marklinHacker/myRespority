@@ -1,6 +1,6 @@
 package com.leyou.item.service;
 
-import com.leyou.item.pojo.Item;
+import com.leyou.item.entity.Item;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
